@@ -1,278 +1,243 @@
-# जनता दरबार - Janta Darbar Platform
+# जनता दरबार (Janta Darbar)
+## Maharashtra State Grievance Management System
 
-A comprehensive WhatsApp-first grievance management platform built for Maharashtra, featuring end-to-end tracking, approvals, routing, and public-facing impact analytics.
+A comprehensive web application for managing citizen complaints and grievances in Maharashtra state, built with modern web technologies and featuring Marathi language support.
 
-## 🚀 Features
+![Dashboard](https://img.shields.io/badge/Status-Live-brightgreen)
+![React](https://img.shields.io/badge/React-18.2.0-blue)
+![Node.js](https://img.shields.io/badge/Node.js-Express-green)
+![Database](https://img.shields.io/badge/Database-PostgreSQL-blue)
+![Language](https://img.shields.io/badge/Language-Marathi%20%7C%20Hindi%20%7C%20English-orange)
 
-### Core Functionality
-- **WhatsApp Integration**: Primary communication channel with Marathi/Hindi/English support
-- **End-to-End Tracking**: Complete audit trail with unique ticket IDs
-- **Intelligent Routing**: Automatic department assignment based on category and location
-- **SLA Monitoring**: Automated escalation system with configurable timeframes
-- **Letter Generation**: PDF letters with QR codes and digital signatures
-- **Multi-language Support**: Marathi (default), Hindi, and English
+## 🌟 Features
 
-### User Roles
-- **Citizens**: Submit grievances and receive updates via WhatsApp
-- **Intake Agents**: Review, normalize, and tag grievances
-- **Approvers**: Accept/reject and sign letters
-- **Routing Officers**: Forward to appropriate departments
-- **Department Officers**: Acknowledge, resolve, and upload proof
-- **Supervisors**: Monitor SLA breaches and escalate
-- **Analysts**: Generate insights and reports
+### 🎯 Core Functionality
+- **Citizen Grievance Management**: Complete complaint tracking system
+- **Multi-Department Support**: Handle complaints across various government departments
+- **Real-time Analytics**: Dashboard with KPIs and performance metrics
+- **Officer Management**: Assign and track officer responsibilities
+- **Status Tracking**: Real-time updates on complaint resolution
 
-### Status Flow
+### 🌐 Language Support
+- **Marathi** (Primary) - मराठी
+- **Hindi** - हिंदी  
+- **English** - English
+- Dynamic language switching with proper font support
+
+### 📱 User Experience
+- **Mobile Responsive**: Optimized for all device sizes
+- **Modern UI**: Clean, intuitive interface with Framer Motion animations
+- **Fixed Header**: Persistent navigation for better UX
+- **Sidebar Navigation**: Easy access to all features
+- **Real-time Updates**: Live data refresh and notifications
+
+### 🔐 Security & Authentication
+- **JWT Authentication**: Secure token-based authentication
+- **Role-based Access**: Different access levels for citizens and officers
+- **Data Validation**: Comprehensive input validation and sanitization
+- **Rate Limiting**: Protection against abuse
+
+## 🏗️ Architecture
+
+### Frontend (React)
 ```
-NEW → INTAKE → APPROVAL_PENDING → APPROVED → DISPATCHED → 
-ACKNOWLEDGED → IN_PROGRESS → RESOLVED → CITIZEN_CONFIRMED → CLOSED
+client/
+├── src/
+│   ├── components/          # Reusable UI components
+│   │   ├── Layout/         # Header, Sidebar, Layout
+│   │   └── UI/             # Buttons, Spinners, Badges
+│   ├── contexts/           # React Context for state management
+│   ├── pages/              # Main application pages
+│   ├── services/           # API service layer
+│   └── i18n.js            # Internationalization setup
 ```
 
-## 🛠️ Technology Stack
-
-### Frontend
-- **React 18** with modern hooks
-- **Framer Motion** for animations and mobile responsiveness
-- **Tailwind CSS** for styling
-- **React Query** for data fetching
-- **React Router** for navigation
-- **i18next** for internationalization
-
-### Backend
-- **Node.js** with Express.js
-- **PostgreSQL** database
-- **Redis** for queues and caching
-- **JWT** for authentication
-- **Multer** for file uploads
-- **Puppeteer** for PDF generation
-- **QRCode** for QR code generation
-
-### Integrations
-- **Interakt** for WhatsApp Business API
-- **Postmark** for email notifications
-- **AWS S3** for file storage (configurable)
-
-## 📁 Project Structure
-
+### Backend (Express.js)
 ```
-janta-darbar-platform/
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── contexts/       # React contexts (Auth, Language)
-│   │   ├── pages/          # Page components
-│   │   ├── services/       # API services
-│   │   └── utils/          # Utility functions
-│   └── public/             # Static assets
-├── server/                 # Node.js backend
-│   ├── config/             # Database and app configuration
-│   ├── middleware/         # Express middleware
-│   ├── routes/             # API routes
-│   ├── services/           # Business logic services
-│   ├── utils/              # Utility functions
-│   └── scripts/            # Database migration scripts
-└── README.md
+server/
+├── routes/                 # API route handlers
+├── middleware/             # Authentication & validation
+├── services/               # Business logic services
+├── config/                 # Database configuration
+├── scripts/                # Database migration scripts
+└── utils/                  # Utility functions
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
-- PostgreSQL 13+
-- Redis 6+
+- Node.js (v16 or higher)
+- PostgreSQL (v12 or higher)
 - npm or yarn
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd janta-darbar-platform
+   git clone https://github.com/CritCoder/janta-darbar.git
+   cd janta-darbar
    ```
 
 2. **Install dependencies**
    ```bash
-   npm run install-all
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   # Copy environment files
-   cp server/env.example server/.env
-   cp client/env.example client/.env
+   # Install server dependencies
+   cd server && npm install
    
-   # Edit the .env files with your configuration
+   # Install client dependencies
+   cd ../client && npm install
    ```
 
-4. **Set up the database**
+3. **Database Setup**
    ```bash
    # Create PostgreSQL database
    createdb janta_darbar
    
    # Run migrations
-   cd server
-   npm run migrate
+   cd server && npm run migrate
    ```
 
-5. **Start the development servers**
+4. **Environment Configuration**
    ```bash
-   # From project root
-   npm run dev
+   # Copy environment files
+   cp server/env.example server/.env
+   cp client/env.local client/.env
+   
+   # Update database URL and other settings in server/.env
    ```
 
-   This will start:
-   - Backend server on http://localhost:5000
-   - Frontend development server on http://localhost:3000
+5. **Start the application**
+   ```bash
+   # Start backend server (Terminal 1)
+   cd server && npm start
+   
+   # Start frontend client (Terminal 2)
+   cd client && npm start
+   ```
 
-## 🔧 Configuration
+6. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5001
+   - Health Check: http://localhost:5001/health
 
-### Environment Variables
+## 📊 Database Schema
 
-#### Server (.env)
-```env
-# Database
-DATABASE_URL=postgresql://username:password@localhost:5432/janta_darbar
+### Key Tables
+- **users**: Citizen and officer accounts
+- **grievances**: Complaint records with full lifecycle tracking
+- **departments**: Government departments and their details
+- **officers**: Department staff and their assignments
+- **events**: Audit trail for all grievance activities
+- **media**: File attachments and evidence
+- **sla_tracking**: Service level agreement monitoring
 
-# JWT Secret
-JWT_SECRET=your-super-secret-jwt-key-here
+## 🎨 UI Components
 
-# WhatsApp Business API (Interakt)
-INTERAKT_API_KEY=your-interakt-api-key
-INTERAKT_WEBHOOK_SECRET=your-webhook-secret
+### Dashboard Features
+- **KPI Cards**: Total, Resolved, Pending, and New grievances
+- **Status Distribution**: Visual breakdown of complaint statuses
+- **Category Distribution**: Complaint type analysis
+- **Department Performance**: Resolution rates and response times
+- **Real-time Updates**: Live data refresh every 30 seconds
 
-# Email Service (Postmark)
-POSTMARK_API_TOKEN=your-postmark-api-token
-POSTMARK_FROM_EMAIL=noreply@yourdomain.com
+### Navigation
+- **Sidebar Menu**: Easy access to all features
+- **Fixed Header**: Persistent search and user controls
+- **Breadcrumbs**: Clear navigation context
+- **Mobile Menu**: Responsive navigation for mobile devices
 
-# File Storage (AWS S3)
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_REGION=ap-south-1
-AWS_S3_BUCKET=your-s3-bucket
+## 🔧 API Endpoints
 
-# Redis
-REDIS_URL=redis://localhost:6379
-```
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/auth/verify` - Token verification
 
-#### Client (.env)
-```env
-REACT_APP_API_URL=http://localhost:5000/api
-```
+### Grievances
+- `GET /api/grievances` - List grievances
+- `POST /api/grievances` - Create new grievance
+- `GET /api/grievances/:id` - Get grievance details
+- `PUT /api/grievances/:id` - Update grievance
 
-## 📱 WhatsApp Integration
+### Analytics
+- `GET /api/analytics/dashboard` - Dashboard statistics
+- `GET /api/analytics/trends` - Performance trends
 
-### Message Templates
+## 🌍 Internationalization
 
-The platform uses pre-approved WhatsApp templates for different scenarios:
+The application supports three languages with proper font rendering:
 
-1. **Grievance Created**: Confirmation message with ticket ID
-2. **Status Updates**: Progress notifications
-3. **Resolution**: Completion notification with feedback request
-4. **Reminders**: SLA breach notifications
+- **Marathi**: Primary language with Devanagari script
+- **Hindi**: Secondary language for broader accessibility  
+- **English**: For technical users and documentation
 
-### Supported Languages
-- **Marathi** (default): मराठी
-- **Hindi**: हिन्दी  
-- **English**: English
-
-## 🗄️ Database Schema
-
-### Core Tables
-- `users` - Citizen information
-- `grievances` - Main grievance records
-- `events` - Complete audit trail
-- `departments` - Department information
-- `officers` - Officer details
-- `letters` - Generated letters
-- `media` - File attachments
-- `tags` - Categorization and deduplication
-
-## 📊 Analytics & Reporting
-
-### Dashboard Metrics
-- Total grievances and resolution rates
-- Department-wise performance
-- SLA compliance tracking
-- Category-wise distribution
-- Daily trends and patterns
-
-### Export Options
-- CSV export for data analysis
-- PDF reports for official use
-- Real-time analytics dashboard
-
-## 🔒 Security Features
-
-- JWT-based authentication
-- Role-based access control
-- Input validation and sanitization
-- Rate limiting
-- CORS protection
-- Helmet.js security headers
+Language switching is available in the header with flag indicators.
 
 ## 📱 Mobile Responsiveness
 
-The platform is built with mobile-first design principles:
-- Responsive layouts for all screen sizes
-- Touch-friendly interfaces
-- Optimized for WhatsApp mobile usage
-- Progressive Web App (PWA) capabilities
+- **Responsive Design**: Works seamlessly on all screen sizes
+- **Touch-friendly**: Optimized for mobile interactions
+- **Progressive Web App**: Can be installed on mobile devices
+- **Offline Support**: Basic functionality available offline
 
 ## 🚀 Deployment
 
-### Production Setup
-
-1. **Database Setup**
+### Production Deployment
    ```bash
-   # Create production database
-   createdb janta_darbar_prod
-   
-   # Run migrations
-   NODE_ENV=production npm run migrate
-   ```
+# Build the application
+cd client && npm run build
 
-2. **Build Frontend**
-   ```bash
-   cd client
-   npm run build
-   ```
+# Start production server
+cd server && npm start
+```
 
-3. **Start Production Server**
-   ```bash
-   cd server
-   NODE_ENV=production npm start
-   ```
+### Environment Variables
+```env
+# Database
+DATABASE_URL=postgresql://localhost:5432/janta_darbar
 
-### Docker Deployment (Optional)
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
+# JWT
+JWT_SECRET=your-super-secret-jwt-key
+
+# Server
+PORT=5001
+NODE_ENV=production
+
+# External APIs
+INTERAKT_API_KEY=your-interakt-api-key
+POSTMARK_API_TOKEN=your-postmark-token
 ```
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👥 Team
+
+- **Shambhu Raja Deshai** - Project Lead
+- **Development Team** - Full-stack development
 
 ## 📞 Support
 
-For support and questions:
-- Email: support@jantadarbar.com
-- WhatsApp: +91-XXXXXXXXXX
-- Documentation: [Link to docs]
+For support and queries:
+- Email: support@jantadarbar.gov.in
+- Phone: +91-XXX-XXXX-XXX
+- Website: https://jantadarbar.gov.in
 
 ## 🙏 Acknowledgments
 
-- Built for the people of Maharashtra
-- Special thanks to Shambhu Raja Desai
-- Community feedback and contributions
+- Maharashtra State Government
+- Open source community
+- React and Express.js teams
+- PostgreSQL community
 
 ---
 
-**जनता दरबार - जनतेसाठी, जनतेकडून, जनतेसोबत** 🇮🇳
+**जनता दरबार** - Empowering citizens through technology
