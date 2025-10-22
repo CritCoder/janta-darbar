@@ -1,25 +1,30 @@
 import React, { useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  Eye, 
-  Edit, 
+import {
+  Search,
+  Filter,
+  Plus,
+  Eye,
+  Edit,
   Send,
   FileText,
   Calendar,
   User
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { grievancesAPI } from '../services/api';
+import { grievancesAPI, departmentsAPI } from '../services/api';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
 import StatusBadge from '../components/UI/StatusBadge';
 import Button from '../components/UI/Button';
+import Modal from '../components/UI/Modal';
 
 const Grievances = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showNewModal, setShowNewModal] = useState(false);
   const [filters, setFilters] = useState({
     status: '',
     department_id: '',
@@ -30,6 +35,19 @@ const Grievances = () => {
     limit: 20
   });
 
+  const [formData, setFormData] = useState({
+    citizen_name: '',
+    citizen_phone: '',
+    citizen_email: '',
+    summary: '',
+    description: '',
+    category: '',
+    severity: 'medium',
+    department_id: '',
+    pincode: '',
+    location: ''
+  });
+
   const { data, isLoading, error } = useQuery(
     ['grievances', filters],
     () => grievancesAPI.getAll(filters),
@@ -38,8 +56,53 @@ const Grievances = () => {
     }
   );
 
+  // Fetch departments for dropdown
+  const { data: departmentsData } = useQuery(
+    'departments',
+    () => departmentsAPI.getAll({ active_only: true })
+  );
+
   const grievances = data?.data?.grievances || [];
   const pagination = data?.data?.pagination || {};
+  const departments = departmentsData?.data?.departments || [];
+
+  // Create mutation
+  const createMutation = useMutation(
+    (data) => grievancesAPI.create(data),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('grievances');
+        setShowNewModal(false);
+        resetForm();
+      }
+    }
+  );
+
+  const resetForm = () => {
+    setFormData({
+      citizen_name: '',
+      citizen_phone: '',
+      citizen_email: '',
+      summary: '',
+      description: '',
+      category: '',
+      severity: 'medium',
+      department_id: '',
+      pincode: '',
+      location: ''
+    });
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSubmit = () => {
+    createMutation.mutate(formData);
+  };
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({
@@ -72,7 +135,7 @@ const Grievances = () => {
           <h1 className="text-3xl font-bold text-gray-900">{t('grievances.title')}</h1>
           <p className="text-gray-600 mt-1">Manage and track all grievances</p>
         </div>
-        <Button icon={<Plus className="w-4 h-4" />}>
+        <Button icon={<Plus className="w-4 h-4" />} onClick={() => setShowNewModal(true)}>
           {t('grievances.newGrievance')}
         </Button>
       </div>
@@ -224,7 +287,10 @@ const Grievances = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <button className="text-primary-600 hover:text-primary-900">
+                      <button
+                        onClick={() => navigate(`/grievances/${grievance.id}`)}
+                        className="text-primary-600 hover:text-primary-900"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button className="text-gray-600 hover:text-gray-900">
@@ -314,6 +380,171 @@ const Grievances = () => {
           </div>
         )}
       </div>
+
+      {/* New Grievance Modal */}
+      <Modal
+        isOpen={showNewModal}
+        onClose={() => {
+          setShowNewModal(false);
+          resetForm();
+        }}
+        title={t('grievances.newGrievance')}
+        onConfirm={handleSubmit}
+        confirmText="Submit Grievance"
+        confirmLoading={createMutation.isLoading}
+        confirmDisabled={!formData.summary || !formData.category || !formData.department_id}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Citizen Name *
+              </label>
+              <input
+                type="text"
+                value={formData.citizen_name}
+                onChange={(e) => handleChange('citizen_name', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="Full Name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number *
+              </label>
+              <input
+                type="tel"
+                value={formData.citizen_phone}
+                onChange={(e) => handleChange('citizen_phone', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="+91XXXXXXXXXX"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email (Optional)
+              </label>
+              <input
+                type="email"
+                value={formData.citizen_email}
+                onChange={(e) => handleChange('citizen_email', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="email@example.com"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Summary *
+              </label>
+              <input
+                type="text"
+                value={formData.summary}
+                onChange={(e) => handleChange('summary', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="Brief summary of the grievance"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Description *
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="Detailed description of the grievance"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category *
+              </label>
+              <select
+                value={formData.category}
+                onChange={(e) => handleChange('category', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">Select Category</option>
+                <option value="water">Water</option>
+                <option value="road">Road</option>
+                <option value="electricity">Electricity</option>
+                <option value="health">Health</option>
+                <option value="sanitation">Sanitation</option>
+                <option value="police">Police</option>
+                <option value="revenue">Revenue</option>
+                <option value="education">Education</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Severity *
+              </label>
+              <select
+                value={formData.severity}
+                onChange={(e) => handleChange('severity', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Department *
+              </label>
+              <select
+                value={formData.department_id}
+                onChange={(e) => handleChange('department_id', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">Select Department</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name_marathi} ({dept.name})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Pincode
+              </label>
+              <input
+                type="text"
+                value={formData.pincode}
+                onChange={(e) => handleChange('pincode', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="6-digit pincode"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location
+              </label>
+              <input
+                type="text"
+                value={formData.location}
+                onChange={(e) => handleChange('location', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="Address or landmark"
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

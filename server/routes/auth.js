@@ -46,7 +46,105 @@ router.post('/register', validateUser, async (req, res) => {
   }
 });
 
-// Login user
+// Send OTP for login
+router.post('/send-otp', async (req, res) => {
+  try {
+    const { phone } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store OTP in database with expiration (5 minutes)
+    await pool.query(
+      'INSERT INTO otp_verifications (phone, otp, expires_at) VALUES ($1, $2, NOW() + INTERVAL \'5 minutes\') ON CONFLICT (phone) DO UPDATE SET otp = $2, expires_at = NOW() + INTERVAL \'5 minutes\'',
+      [phone, otp]
+    );
+
+    // TODO: Send OTP via SMS/WhatsApp
+    console.log(`OTP for ${phone}: ${otp}`);
+
+    res.json({
+      message: 'OTP sent successfully',
+      phone: phone
+    });
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ error: 'Failed to send OTP' });
+  }
+});
+
+// Verify OTP and login
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+
+    if (!phone || !otp) {
+      return res.status(400).json({ error: 'Phone number and OTP are required' });
+    }
+
+    // Development mode: accept any OTP
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔓 Development mode: Accepting any OTP for ${phone}`);
+    } else {
+      // Production mode: verify OTP
+      const result = await pool.query(
+        'SELECT * FROM otp_verifications WHERE phone = $1 AND otp = $2 AND expires_at > NOW()',
+        [phone, otp]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(401).json({ error: 'Invalid or expired OTP' });
+      }
+    }
+
+    // Find or create user
+    let userResult = await pool.query(
+      'SELECT id, phone, name, language, blocked, role FROM users WHERE phone = $1',
+      [phone]
+    );
+
+    let user;
+    if (userResult.rows.length === 0) {
+      // Create new user if doesn't exist (default role: citizen)
+      const newUser = await pool.query(
+        'INSERT INTO users (phone, name, language, role) VALUES ($1, $2, $3, $4) RETURNING id, phone, name, language, blocked, role',
+        [phone, 'User', 'mr', 'citizen']
+      );
+      user = newUser.rows[0];
+    } else {
+      user = userResult.rows[0];
+    }
+
+    if (user.blocked) {
+      return res.status(403).json({ error: 'User account is blocked' });
+    }
+
+    // Delete used OTP
+    await pool.query('DELETE FROM otp_verifications WHERE phone = $1', [phone]);
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, phone: user.phone },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      message: 'Login successful',
+      user,
+      token
+    });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ error: 'OTP verification failed' });
+  }
+});
+
+// Login user (legacy endpoint for backward compatibility)
 router.post('/login', async (req, res) => {
   try {
     const { phone } = req.body;
@@ -57,7 +155,7 @@ router.post('/login', async (req, res) => {
 
     // Find user
     const result = await pool.query(
-      'SELECT id, phone, name, language, blocked FROM users WHERE phone = $1',
+      'SELECT id, phone, name, language, blocked, role FROM users WHERE phone = $1',
       [phone]
     );
 

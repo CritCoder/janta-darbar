@@ -12,6 +12,8 @@ import Officers from './pages/Officers';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import CitizenStatus from './pages/CitizenStatus';
+import AdminQuickCreate from './pages/AdminQuickCreate';
+import OfficerDashboard from './pages/OfficerDashboard';
 import LoadingSpinner from './components/UI/LoadingSpinner';
 
 // Protected Route Component
@@ -68,6 +70,8 @@ function App() {
               >
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
+                <Route path="admin/quick-create" element={<AdminQuickCreate />} />
+                <Route path="officer/assignments" element={<OfficerDashboard />} />
                 <Route path="grievances" element={<Grievances />} />
                 <Route path="grievances/:id" element={<GrievanceDetail />} />
                 <Route path="departments" element={<Departments />} />

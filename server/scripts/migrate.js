@@ -139,6 +139,17 @@ const createTables = async () => {
       )
     `);
 
+    // OTP verification table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS otp_verifications (
+        id SERIAL PRIMARY KEY,
+        phone VARCHAR(15) UNIQUE NOT NULL,
+        otp VARCHAR(6) NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Create indexes for better performance
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_grievances_status ON grievances(status)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_grievances_citizen ON grievances(citizen_id)`);

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -17,15 +17,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('token'));
 
-  useEffect(() => {
-    if (token) {
-      verifyToken();
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
+  const logout = () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    toast.success('Logged out successfully');
+  };
 
-  const verifyToken = async () => {
+  const verifyToken = useCallback(async () => {
     try {
       const response = await authAPI.verifyToken();
       if (response.data.valid) {
@@ -36,6 +35,52 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Token verification failed:', error);
       logout();
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      verifyToken();
+    } else {
+      setLoading(false);
+    }
+  }, [token, verifyToken]);
+
+  const sendOtp = async (phone) => {
+    try {
+      const response = await authAPI.sendOtp({ phone });
+      
+      if (response.data.message) {
+        toast.success('OTP sent successfully!');
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Send OTP error:', error);
+      const message = error.response?.data?.error || 'Failed to send OTP';
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  };
+
+  const verifyOtp = async (phone, otp) => {
+    try {
+      setLoading(true);
+      const response = await authAPI.verifyOtp({ phone, otp });
+      
+      if (response.data.token) {
+        setToken(response.data.token);
+        setUser(response.data.user);
+        localStorage.setItem('token', response.data.token);
+        toast.success('Login successful!');
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Verify OTP error:', error);
+      const message = error.response?.data?.error || 'OTP verification failed';
+      toast.error(message);
+      return { success: false, error: message };
     } finally {
       setLoading(false);
     }
@@ -85,13 +130,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    toast.success('Logged out successfully');
-  };
-
   const updateProfile = async (profileData) => {
     try {
       const response = await authAPI.updateProfile(profileData);
@@ -112,6 +150,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
+    sendOtp,
+    verifyOtp,
     logout,
     updateProfile,
     isAuthenticated: !!user

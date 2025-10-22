@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Menu, Bell, Search, Globe } from 'lucide-react';
+import { Bell, Search, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SidebarTrigger } from '../UI/sidebar';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 
-const Header = ({ onMenuClick }) => {
+const Header = () => {
   const { currentLanguage, changeLanguage, languages, t } = useLanguage();
   const { user } = useAuth();
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
@@ -15,13 +16,8 @@ const Header = ({ onMenuClick }) => {
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Left side */}
         <div className="flex items-center space-x-4">
-          {/* Mobile menu button */}
-          <button
-            onClick={onMenuClick}
-            className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 lg:hidden"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          {/* Sidebar trigger */}
+          <SidebarTrigger />
 
           {/* Search */}
           <div className="hidden md:block">

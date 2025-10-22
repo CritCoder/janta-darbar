@@ -11,10 +11,10 @@ const authenticateToken = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Get user details from database
+
+    // Get user details from database including role
     const userResult = await pool.query(
-      'SELECT id, phone, name, language, blocked FROM users WHERE id = $1',
+      'SELECT id, phone, name, language, blocked, role FROM users WHERE id = $1',
       [decoded.userId]
     );
 
@@ -48,7 +48,15 @@ const requireRole = (roles) => {
   };
 };
 
+// Role-specific middleware helpers
+const requireAdmin = requireRole(['admin']);
+const requireOfficer = requireRole(['officer', 'admin']);
+const requireCitizen = requireRole(['citizen', 'admin', 'officer']);
+
 module.exports = {
   authenticateToken,
-  requireRole
+  requireRole,
+  requireAdmin,
+  requireOfficer,
+  requireCitizen
 };

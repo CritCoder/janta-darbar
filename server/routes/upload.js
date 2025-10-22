@@ -4,6 +4,9 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { authenticateToken } = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs').promises;
+const path = require('path');
+const { processGrievanceDocument } = require('../services/ocrService');
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -211,16 +214,111 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * Upload and process grievance document with OCR (for public citizens)
+ * POST /api/upload/ocr-grievance
+ * No authentication required for public submissions
+ */
+router.post('/ocr-grievance', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const file = req.file;
+
+    // Generate unique filename and save temporarily for OCR
+    const fileExtension = file.originalname.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExtension}`;
+    const uploadDir = path.join(__dirname, '../uploads/temp');
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    const tempFilePath = path.join(uploadDir, fileName);
+    await fs.writeFile(tempFilePath, file.buffer);
+
+    // Process with OCR using Gemini
+    console.log('Processing file with OCR:', fileName);
+    const ocrResult = await processGrievanceDocument(tempFilePath, fileExtension);
+
+    // Upload to permanent storage
+    let fileUrl;
+    try {
+      fileUrl = await uploadToStorage(file.buffer, fileName, 'document');
+    } catch (error) {
+      console.error('Storage upload error:', error);
+      // Fallback to local storage
+      const publicDir = path.join(__dirname, '../uploads/public');
+      await fs.mkdir(publicDir, { recursive: true });
+      const publicPath = path.join(publicDir, fileName);
+      await fs.copyFile(tempFilePath, publicPath);
+      fileUrl = `/uploads/public/${fileName}`;
+    }
+
+    // Clean up temp file
+    try {
+      await fs.unlink(tempFilePath);
+    } catch (error) {
+      console.error('Error deleting temp file:', error);
+    }
+
+    if (!ocrResult.success) {
+      return res.status(200).json({
+        message: 'File uploaded but OCR processing failed',
+        file_url: fileUrl,
+        file_info: {
+          filename: fileName,
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size
+        },
+        ocr_data: null,
+        ocr_error: ocrResult.error
+      });
+    }
+
+    // Return file info and extracted data
+    res.status(200).json({
+      message: 'File uploaded and processed successfully',
+      file_url: fileUrl,
+      file_info: {
+        filename: fileName,
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size
+      },
+      ocr_data: ocrResult.data
+    });
+
+  } catch (error) {
+    console.error('OCR upload error:', error);
+    res.status(500).json({
+      error: 'File upload and OCR processing failed',
+      message: error.message
+    });
+  }
+});
+
 // Helper functions (implement based on your storage solution)
 async function uploadToStorage(buffer, fileName, fileType) {
   // Implement your storage upload logic (AWS S3, Google Cloud Storage, etc.)
-  // For now, return a placeholder URL
-  return `https://your-storage-url/uploads/${fileType}/${fileName}`;
+  // For now, save to local uploads directory
+  const uploadDir = path.join(__dirname, '../uploads/public');
+  await fs.mkdir(uploadDir, { recursive: true });
+  const filePath = path.join(uploadDir, fileName);
+  await fs.writeFile(filePath, buffer);
+  return `/uploads/public/${fileName}`;
 }
 
 async function deleteFromStorage(fileUrl) {
   // Implement your storage delete logic
-  console.log('Deleting file from storage:', fileUrl);
+  try {
+    if (fileUrl.startsWith('/uploads/')) {
+      const filePath = path.join(__dirname, '..', fileUrl);
+      await fs.unlink(filePath);
+    }
+  } catch (error) {
+    console.error('Delete error:', error);
+  }
 }
 
 module.exports = router;
