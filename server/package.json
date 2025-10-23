@@ -37,6 +37,8 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "@playwright/test": "^1.56.1",
+    "nodemon": "^3.0.2",
+    "playwright": "^1.56.1"
   }
 }

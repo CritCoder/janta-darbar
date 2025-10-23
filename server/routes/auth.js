@@ -55,8 +55,8 @@ router.post('/send-otp', async (req, res) => {
       return res.status(400).json({ error: 'Phone number is required' });
     }
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate OTP (hardcoded in development, random in production)
+    const otp = process.env.NODE_ENV === 'development' ? '111111' : Math.floor(100000 + Math.random() * 900000).toString();
     
     // Store OTP in database with expiration (5 minutes)
     await pool.query(
@@ -65,7 +65,11 @@ router.post('/send-otp', async (req, res) => {
     );
 
     // TODO: Send OTP via SMS/WhatsApp
-    console.log(`OTP for ${phone}: ${otp}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔓 Development mode: Use hardcoded OTP 111111 for ${phone}`);
+    } else {
+      console.log(`OTP for ${phone}: ${otp}`);
+    }
 
     res.json({
       message: 'OTP sent successfully',
@@ -86,9 +90,13 @@ router.post('/verify-otp', async (req, res) => {
       return res.status(400).json({ error: 'Phone number and OTP are required' });
     }
 
-    // Development mode: accept any OTP
+    // Development mode: accept hardcoded OTP 111111 or any OTP
     if (process.env.NODE_ENV === 'development') {
-      console.log(`🔓 Development mode: Accepting any OTP for ${phone}`);
+      if (otp === '111111') {
+        console.log(`🔓 Development mode: Using hardcoded OTP 111111 for ${phone}`);
+      } else {
+        console.log(`🔓 Development mode: Accepting any OTP for ${phone}`);
+      }
     } else {
       // Production mode: verify OTP
       const result = await pool.query(

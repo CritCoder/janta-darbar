@@ -11,10 +11,17 @@
     "start": "cd server && npm start",
     "install-all": "npm install && cd server && npm install && cd ../client && npm install"
   },
-  "keywords": ["grievance", "whatsapp", "maharashtra", "janta-darbar"],
+  "keywords": [
+    "grievance",
+    "whatsapp",
+    "maharashtra",
+    "janta-darbar"
+  ],
   "author": "Shambhu Raja Desai",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@playwright/test": "^1.56.1",
+    "concurrently": "^8.2.2",
+    "playwright": "^1.56.1"
   }
 }
